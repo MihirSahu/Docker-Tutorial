@@ -1,0 +1,22 @@
+What motivated me to learn about this from reddit:
+
+fofosfederation
+Totally disagree. You write just a few lines in a docker compose file, and you can spin up that container the same way on any computer. My entire home stack, plex, radarr, sonarr, qbittorrent, sabnzbd, foundry vtt, valheim, syncthing, vpn, etc etc, is one command to bring to a new computer. You just have your docker compose file, and you can start your entire stack anywhere.
+You shouldn't think about setting up a program as "I need to make this computer do this thing" and instead think of it as "I need to define this configuration as code so I can make any computer do this thing".
+
+TheOnlyOnzz
+Could you elaborate on how you keep all those on a docker image? I have pretty basic docker experience but I'd like to try it out. Is there a specific image you use to host those applications? Thanks.
+
+fofosfederation
+They're all in separate containers, you use a docker-compose yml file to configure them all. So the configuration for everything is in one place, and then you use 'docker-compose up' to spin up all the containers defined in your yml file.
+Look up docker compose, I'm sure someone has made a much better, brief overview on YouTube.
+
+
+Notes
+------
+Docker compose is a way to store docker run commands in a file
+Write commands in a .yml/.yaml file, and run it with docker-compose
+Creates a common docker network automatically
+
+docker-compose -f <.yaml file> up -d
+docker compose -f <.yaml file> down

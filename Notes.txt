@@ -1,0 +1,171 @@
+Docker
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+For more info see docker docs
+To find docker official images go to hub.docker.com
+For help on cli use "docker <command> --help"
+*** I don't explicitly state it on many commands but you need to specify tags along with the name/id of the images whenever using any commands
+
+Docker - a tool for running applications in an isolated environment
+	Similar to Virtual machine
+	If an application works on one machine it's guaranteed to work on another
+	Standard for software deployment
+
+Containers vs VM
+	Containers - an abstraction at the app layer that packages code and dependencies together. Multiple containers can run on the same machine
+		Doesn't need a full os to run; docker can share resources of same machine with different containers
+	VM - abstraction of physical hardware and turns one server into many servers. Each vm has a full copy of an os
+
+Benefits of docker
+	Run container in less time
+	Less resources needed
+	Doesn't need full OS
+
+Docker image - template for creating an environment of your choice
+	Snapshot
+	Contains everything needed to run apps
+	A container is a running instance of an image
+	Can find images on hub.docker.com
+
+Essential commands
+	To pull docker images use "docker pull <image name>:<tag>"
+	To see local images use "docker images" or "docker image ls"
+	To see which containers are running use "docker ps"
+		To see all containers - even stopped ones - use the -a option
+		To see output in better format use "--format='ID\t{{.ID}}\nNAME\t{{.Names}}\nIMAGE\t{{.Image}}\nPORTS\t{{.Ports}}\nCOMMAND\t{{.Command}}\nCREATED\t{{.CreatedAt}}\nSTATUS\t{{.Status}}\n'"
+	Run docker image "docker run -d <image name>:<tag>" 
+		-d means detattached
+		To use certain ports for containers use -p option (ex. -p 8080:80 links a port in the container (80) to the host machine (8080))
+		to use a custom name use the --name option
+		run creates a new container from the image
+		Example: docker run -d --name testing1 -p 8080:80 testing-website:latest
+	Stop docker container "docker stop <container id or name>"
+		stopping the container doesn't delete it
+	Start a stopped container using "docker start <container id or name>"
+	Delete a container using "docker rm <container id or name>"
+		Use "docker rm $(docker ps -aq)" to delete all containers (won't work if one of the containers is still running, use -f to delete running containers)
+	Delete an image using "docker image rmi <image name>:<tag>"
+
+Volumes - allow sharing sharing data between container and host, and between containers
+	To mount the current folder into a container to create a volume use check the docs of the image you're using
+	To share volume between containers you have to first have volumes set up on one container, then run another container and use "--volumes-from <first container>"
+
+To access docker container use "docker exec -it <container name> bash"
+
+Create own images
+	1. Create Dockerfile
+		Dockerfile - contains list of steps on how to create images
+	2. Create images from Dockerfile
+	3. Run containers from images
+
+	Volumes are great for development but when making an image you should copy all content into it
+
+	Basic Commands for Dockerfile
+		FROM <image name>:<tag>
+			When building images, most of the time you use a base image that's already been created and add your own content to it
+		ADD <file name from host machine> <destination in docker image>
+			Add all content you want in image into the image (destination depends on the base image)
+		WORKDIR <folder name>
+			If folder exists use that, or create folder and make it the working directory
+		RUN <command>
+			Run commands and arguments, many run commands can be used to build an image
+			Use this to install packages/dependencies (ex. npm install)
+		CMD <command>
+			Run commands
+			Use this to actually run packages (ex. node index.js)
+
+	Example Dockerfile:
+	FROM node:latest
+	WORKDIR /app
+	ADD . .
+	RUN npm install
+	CMD node index.js
+
+	Example Dockerfile for nginx:
+	FROM nginx:1.21.1-alpine
+	ADD . /usr/share/nginx/html
+	
+	After creating Dockerfile use
+		1. docker build <options> <dockerfile location>
+			Use -t to add tag (in <image>:<version/tag> form)
+	
+	.dockerignore - a file where you can specify which files to ignore and not include in the created image
+
+Caching and Layers
+	When creating an images, instead of reinstalling content on each image you can pre-load content that doesn't change much to save resources and lower building time
+
+Reduce File Size of Images
+	To reduce file size of docker images you can use alpine linux
+	Most official docker images have alpine linux tags (default is latest)
+		Install alpine version with "docker pull <image name>:<image tag for alpine>"
+
+Tags and Versions
+	*** Need to specify tags along with the name of the images whenever using any commands
+	Allows you to control image version
+	Avoids breaking changes
+	Versions are included within the tag
+	<image name>:latest is the latest version
+	Refer to the image and version/tag with "<image name>:<version/tag>"
+		Look at the docker page for the specific image to see which tags they have (hub.docker.com)
+	To change a name and tag use "docker tag <image name>:<tag> <image name>:<new tag>"
+
+Docker Registries
+	Server side applications that store and lets you distribute docker images
+	Used in CD/CI pipeline
+	Docker registries can be private or public
+	Few registries
+		Docker hub
+		quay.io
+		Amazon ECR
+	To store image in docker hub
+		1. Create/verify account
+		2. Login to docker in terminal with "docker login"
+		3. Create a new repo
+		4. Rename image name and tag to <username>/<repo name>:<tag>
+		5. docker push <username>/<repo name>:<tag>
+
+Inspect Images
+	To see additional data about images use "docker inspect <image name/id>:<tag>"
+
+Docker logs
+	To see logs of running containers use "docker logs <container id>"
+		Use -f (follow) flag to show live updates
+
+Examine Container
+	To access docker container use "docker exec -it <container name/id> <path to shell>"
+		Use docker inspect and look under the 'Cmd' section to see which shell the container has available
+
+
+
+Kubernetes
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+Kubernetes - manages many containers automatically
+	Most popular container orchestration tool
+
+Rise of microservices led to increased usuage of container, which led to the need for a container management tool
+Container orchestration tools offer
+	High availability
+	Scalability
+	Disaster recovery
+
+Kubernetes architecture
+	Master node -> worker nodes -> kublet process (kublet allows cluster to talk to each other)
+	Each worker has docker containers on it, worker is where applications are running
+	Master node runs kubernetes processes to manage worker nodes
+		API server process - manages UI, API, CLI
+		Controller manager
+		Scheduler
+		etcd - holds all configs and status data of current cluster
+		Can restore entire cluster using the etcd snapshots
+	Virtual network - allows master node to talk to worker nodes, unifies all nodes
+
+	Worker node
+		Simple server of virtual or physical machine
+		Basic component of kubernetes is a pod: can hold multiple containers, but usually only has one
+			A pod is a layer on top of a container (abstraction over container)
+			Allows you to use only the kubernetes layer instead of interacting directly with the container
+			Each pod has it's own ip address
+			Pods can die very easily
+
+Stopped video at 3:10:26
